@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World of Warcraft - Deník Úkolů (Quest Log)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Metamorphous&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+    :root {
+      --wow-gold: #f8b700;
+      --wow-border-gold: #c79c5e;
+      --wow-parchment: #e2d1a6;
+      --wow-parchment-dark: #ccb98d;
+      --wow-dark-bg: #0c0b0a;
+      --wow-frame-dark: #1e1711;
+    }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: var(--wow-dark-bg);
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(30, 20, 10, 0.8) 0%, rgba(5, 5, 5, 0.95) 100%),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230c0b0a"/><path d="M0 0h100v100H0z" fill="none" stroke="%231a140e" stroke-width="1"/></svg>');
+      color: #3b2817;
+      user-select: none;
+    }
+
+    .font-wow-title {
+      font-family: 'Metamorphous', 'Cinzel', serif;
+    }
+
+    .font-wow-heading {
+      font-family: 'Cinzel', serif;
+    }
+
+    /* WoW Metallic Gold Frame Styling */
+    .wow-frame {
+      background: #17120e;
+      border: 4px solid #3d2e1e;
+      box-shadow: 
+        0 0 0 2px #7a5f38,
+        0 0 0 4px #261b10,
+        0 15px 35px rgba(0,0,0,0.85),
+        inset 0 0 15px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    .wow-frame-header {
+      background: linear-gradient(180deg, #3a2b1c 0%, #1c140d 100%);
+      border-bottom: 2px solid #5a4329;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Parchment Paper Texture Effect */
+    .parchment {
+      background: #d3c299;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.15) 100%),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(%23noise)" opacity="0.08"/></svg>');
+      box-shadow: inset 0 0 30px rgba(80, 50, 20, 0.35);
+      border: 2px solid #8c6f49;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #120e0a;
+      border-left: 1px solid #2e2316;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #5a4328, #2a1f13);
+      border: 1px solid #8c6e43;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #7a5b37, #3a2b1a);
+    }
+
+    /* WOW Buttons */
+    .wow-btn {
+      background: linear-gradient(180deg, #8a1e14 0%, #4a0c06 100%);
+      border: 1px solid #f8b700;
+      color: #fff8e7;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      text-shadow: 1px 1px 2px #000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+      transition: all 0.1s ease;
+    }
+    .wow-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #a8281c 0%, #611109 100%);
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(248, 183, 0, 0.6);
+    }
+    .wow-btn:active:not(:disabled) {
+      background: linear-gradient(180deg, #330804 0%, #5a1008 100%);
+      transform: translateY(1px);
+    }
+    .wow-btn:disabled {
+      background: linear-gradient(180deg, #3a322d 0%, #1f1a17 100%);
+      border-color: #554a40;
+      color: #776a5e;
+      cursor: not-allowed;
+      text-shadow: none;
+    }
+
+    .wow-btn-secondary {
+      background: linear-gradient(180deg, #3d342a 0%, #1c1712 100%);
+      border: 1px solid #7c684e;
+      color: #d1c2a5;
+    }
+    .wow-btn-secondary:hover:not(:disabled) {
+      background: linear-gradient(180deg, #54483b 0%, #29221b 100%);
+      color: #fff8e7;
+      border-color: #f8b700;
+    }
+
+    /* WoW Difficulty Colors */
+    .lvl-trivial { color: #808080; }  /* Grey */
+    .lvl-easy { color: #1ef01e; }     /* Green */
+    .lvl-normal { color: #ffdf00; }   /* Yellow */
+    .lvl-hard { color: #ff8000; }     /* Orange */
+    .lvl-veryhard { color: #ff2020; } /* Red */
+
+    /* Item Rarity Colors */
+    .rarity-poor { color: #9d9d9d; border-color: #9d9d9d; }
+    .rarity-common { color: #ffffff; border-color: #d0d0d0; }
+    .rarity-uncommon { color: #1eff00; border-color: #1eff00; }
+    .rarity-rare { color: #0070dd; border-color: #0070dd; }
+    .rarity-epic { color: #a335ee; border-color: #a335ee; }
+    .rarity-legendary { color: #ff8000; border-color: #ff8000; }
+
+    /* Custom Checkbox */
+    .wow-checkbox {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #5a4328;
+      background: #1a130c;
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+      vertical-align: middle;
+    }
+    .wow-checkbox:checked {
+      background: #8a1e14;
+      border-color: #f8b700;
+    }
+    .wow-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      color: #f8b700;
+      font-size: 14px;
+      font-weight: bold;
+      top: -3px;
+      left: 2px;
+    }
+
+    /* Coin styling */
+    .coin-gold { color: #e5b113; text-shadow: 0 0 2px #000; }
+    .coin-silver { color: #b4b4b4; text-shadow: 0 0 2px #000; }
+    .coin-copper { color: #c7713a; text-shadow: 0 0 2px #000; }
+
+    /* Animations */
+    @keyframes questCompleteGlow {
+      0% { box-shadow: 0 0 5px #f8b700; }
+      50% { box-shadow: 0 0 20px #f8b700, inset 0 0 10px #f8b700; }
+      100% { box-shadow: 0 0 5px #f8b700; }
+    }
+    .complete-anim {
+      animation: questCompleteGlow 2s infinite;
+    }
+
+    @keyframes levelUpFlash {
+      0% { opacity: 0; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0; transform: scale(1.3); }
+    }
+    .level-up-banner {
+      animation: levelUpFlash 2.5s forwards ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-x-hidden">
+
+  <!-- Level Up Overlay Banner -->
+  <div id="level-up-overlay" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center hidden">
+    <div class="level-up-banner text-center">
+      <h1 class="text-5xl md:text-7xl font-extrabold font-wow-title text-yellow-300 drop-shadow-[0_5px_5px_rgba(0,0,0,1)] tracking-wider">
+        LEVEL UP!
+      </h1>
+      <p id="level-up-text" class="text-2xl md:text-3xl font-wow-heading text-white drop-shadow-[0_3px_3px_rgba(0,0,0,1)] mt-2">
+        Dosáhl jsi úrovně 2!
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Container / World of Warcraft Window Frame -->
+  <div class="w-full max-w-5xl wow-frame rounded-lg overflow-hidden flex flex-col my-auto relative">
+    
+    <!-- TOP BAR: Character HUD / Header -->
+    <div class="wow-frame-header p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-white border-b border-yellow-900/40">
+      
+      <!-- Character Info -->
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <div class="w-12 h-12 rounded-full bg-stone-900 border-2 border-yellow-600 flex items-center justify-center text-yellow-500 font-bold text-xl shadow-inner overflow-hidden">
+            <i class="fa-solid me-0.5 fa-shield-halved text-2xl text-amber-500"></i>
+          </div>
+          <span id="player-level" class="absolute -bottom-1 -right-1 bg-black text-yellow-400 font-bold text-xs px-1.5 py-0.5 rounded border border-yellow-600 shadow">
+            1
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="player-name" value="Hrdina Azerothu" class="bg-transparent text-yellow-400 font-wow-title text-lg font-bold border-b border-transparent hover:border-yellow-600/50 focus:border-yellow-500 focus:outline-none px-1 rounded transition" title="Klikni pro úpravu jména">
+            <i class="fa-solid fa-pen text-xs text-stone-500 pointer-events-none"></i>
+          </div>
+          <!-- XP Bar -->
+          <div class="w-36 sm:w-48 bg-stone-950 border border-stone-700 rounded-full h-3.5 mt-1 relative overflow-hidden shadow-inner">
+            <div id="xp-bar-fill" class="bg-gradient-to-r from-purple-800 via-purple-600 to-indigo-500 h-full w-0 transition-all duration-500"></div>
+            <span id="xp-text" class="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
+              0 / 100 XP
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Currency Display -->
+      <div class="flex items-center space-x-3 bg-stone-950/80 px-3 py-1.5 rounded border border-amber-950/80 text-sm font-semibold">
+        <div class="flex items-center space-x-1" title="Zlaťáky">
+          <span id="coin-gold" class="coin-gold">0</span>
+          <i class="fa-solid fa-circle text-xs text-yellow-500"></i>
+        </div>
+        <div class="flex items-center space-x-1" title="Stříbrňáky">
+          <span id="coin-silver" class="coin-silver">0</span>
+          <i class="fa-solid fa-circle text-xs text-stone-300"></i>
+        </div>
+        <div class="flex items-center space-x-1" title="Měďáky">
+          <span id="coin-copper" class="coin-copper">0</span>
+          <i class="fa-solid fa-circle text-xs text-amber-700"></i>
+        </div>
+      </div>
+
+      <!-- Control Buttons (Audio Toggle, Backup, New Quest) -->
+      <div class="flex items-center space-x-2">
+        <button id="btn-sound-toggle" class="wow-btn-secondary p-2 rounded text-xs flex items-center justify-center w-8 h-8" title="Zapnout / Vypnout zvuky">
+          <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+        </button>
+        <button id="btn-export" class="wow-btn-secondary p-2 rounded text-xs flex items-center justify-center w-8 h-8" title="Exportovat Data (JSON)">
+          <i class="fa-solid fa-download"></i>
+        </button>
+        <label for="import-file" class="wow-btn-secondary p-2 rounded text-xs flex items-center justify-center w-8 h-8 cursor-pointer" title="Importovat Data (JSON)">
+          <i class="fa-solid fa-upload"></i>
+          <input type="file" id="import-file" accept=".json" class="hidden">
+        </label>
+        <button id="btn-new-quest" class="wow-btn px-3 py-1.5 rounded text-xs uppercase tracking-wider flex items-center space-x-1">
+          <i class="fa-solid fa-plus text-yellow-400"></i>
+          <span class="hidden sm:inline">Nový Quest</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN BODY: WoW Quest Log Interface -->
+    <div class="grid grid-cols-1 md:grid-cols-12 min-h-[520px] max-h-[75vh]">
+      
+      <!-- LEFT PANEL: Quest Categories & List (5 Cols) -->
+      <div class="md:col-span-5 border-r border-amber-950/60 bg-stone-950/60 flex flex-col h-full overflow-hidden">
+        
+        <!-- Search / Filter Header -->
+        <div class="p-2 border-b border-amber-950/40 bg-stone-900/40 flex items-center justify-between">
+          <span class="font-wow-heading text-xs uppercase tracking-wider text-amber-200/70 px-2">Deník Úkolů</span>
+          <span id="quest-count-badge" class="text-xs text-stone-400 px-2">0 / 25</span>
+        </div>
+
+        <!-- Quest Scroll List -->
+        <div id="quest-tree-container" class="p-2 overflow-y-auto flex-1 space-y-3 font-wow-heading">
+          <!-- Dynamically populated quest list categories -->
+        </div>
+
+        <!-- Stats Footer -->
+        <div class="p-2 border-t border-amber-950/40 bg-stone-900/60 text-[11px] text-stone-400 flex justify-between items-center px-3">
+          <span>Splněné Questy: <strong id="stat-completed-count" class="text-amber-400">0</strong></span>
+          <button id="btn-clear-completed" class="text-stone-500 hover:text-red-400 transition underline">Smazat hotové</button>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: WoW Parchment Quest Detail (7 Cols) -->
+      <div class="md:col-span-7 parchment p-4 sm:p-6 flex flex-col justify-between overflow-y-auto relative">
+        
+        <!-- Empty State View -->
+        <div id="quest-detail-empty" class="h-full flex flex-col items-center justify-center text-stone-700 italic text-center p-8">
+          <i class="fa-solid fa-scroll text-5xl mb-3 text-amber-900/40"></i>
+          <p class="font-wow-heading text-lg text-amber-950/70">Vyberte quest ze seznamu vlevo</p>
+          <p class="text-xs text-stone-600 mt-1">nebo vytvořte nový úkol tlačítkem "+ Nový Quest"</p>
+        </div>
+
+        <!-- Active Quest Detail View -->
+        <div id="quest-detail-content" class="hidden flex-col justify-between h-full space-y-4">
+          <div>
+            <!-- Header: Title & Level -->
+            <div class="border-b-2 border-amber-900/30 pb-2 mb-3">
+              <h2 id="detail-title" class="text-xl sm:text-2xl font-bold font-wow-title text-amber-950 tracking-wide leading-tight">
+                <!-- Quest Title -->
+              </h2>
+              <div class="flex items-center space-x-2 mt-1 text-xs font-bold">
+                <span id="detail-category" class="text-amber-800 uppercase tracking-wider">Zóna</span>
+                <span class="text-amber-900/40">•</span>
+                <span id="detail-level-badge" class="px-1.5 py-0.5 rounded bg-amber-950/10 font-mono">Úroveň 1</span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div id="detail-description" class="text-stone-900 text-sm leading-relaxed mb-4 font-serif italic border-l-2 border-amber-800/30 pl-3">
+              <!-- Quest Description -->
+            </div>
+
+            <!-- Objectives Checklist -->
+            <div class="mb-4">
+              <h3 class="font-wow-heading text-xs font-bold text-amber-950 uppercase tracking-wider mb-2 border-b border-amber-900/20 pb-0.5">
+                Cíle úkolu
+              </h3>
+              <div id="detail-objectives-list" class="space-y-2 text-sm text-stone-900">
+                <!-- Checklist items populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Rewards Section -->
+            <div class="mt-4 pt-3 border-t-2 border-amber-900/30">
+              <h3 class="font-wow-heading text-xs font-bold text-amber-950 uppercase tracking-wider mb-2">
+                Odměny za dokončení
+              </h3>
+              <p class="text-xs text-stone-700 mb-2">Po dokončení tohoto úkolu obdržíte:</p>
+              
+              <div class="flex flex-wrap items-center gap-3">
+                <!-- XP Reward -->
+                <div id="reward-xp-container" class="flex items-center space-x-1.5 bg-amber-950/10 px-2.5 py-1 rounded border border-amber-900/20 text-xs font-bold text-purple-900">
+                  <i class="fa-solid fa-star text-amber-600"></i>
+                  <span id="reward-xp">0 XP</span>
+                </div>
+
+                <!-- Money Reward -->
+                <div id="reward-money-container" class="flex items-center space-x-2 bg-amber-950/10 px-2.5 py-1 rounded border border-amber-900/20 text-xs font-bold">
+                  <span id="reward-money-gold" class="coin-gold">0<i class="fa-solid fa-circle text-[9px] ml-0.5"></i></span>
+                  <span id="reward-money-silver" class="coin-silver">0<i class="fa-solid fa-circle text-[9px] ml-0.5"></i></span>
+                  <span id="reward-money-copper" class="coin-copper">0<i class="fa-solid fa-circle text-[9px] ml-0.5"></i></span>
+                </div>
+              </div>
+
+              <!-- Item Reward Card -->
+              <div id="reward-item-container" class="mt-3 hidden">
+                <div class="flex items-center space-x-3 bg-stone-900 p-2 rounded border border-amber-900/60 w-fit">
+                  <div id="reward-item-icon-frame" class="w-10 h-10 bg-stone-950 border-2 rounded flex items-center justify-center text-xl text-stone-300 relative shadow">
+                    <i id="reward-item-icon" class="fa-solid fa-shield"></i>
+                  </div>
+                  <div>
+                    <div id="reward-item-name" class="font-bold text-sm leading-none">Předmět</div>
+                    <div id="reward-item-rarity" class="text-[10px] uppercase font-bold tracking-wider mt-0.5">Rarita</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Actions Bar -->
+          <div class="pt-4 border-t border-amber-900/30 flex items-center justify-between gap-2 mt-auto">
+            <button id="btn-abandon-quest" class="text-xs font-wow-heading text-red-800 hover:text-red-950 font-bold uppercase tracking-wider px-2 py-1 rounded hover:bg-red-900/10 transition">
+              <i class="fa-solid fa-trash-can mr-1"></i> Opuštět Quest
+            </button>
+            <button id="btn-complete-quest" class="wow-btn px-5 py-2 text-sm uppercase tracking-wider rounded" disabled>
+              Dokončit Quest
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE NEW QUEST -->
+  <div id="modal-new-quest" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 z-50 hidden">
+    <div class="wow-frame rounded-lg w-full max-w-lg p-5 text-amber-100 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-amber-900/60 pb-2">
+        <h3 class="font-wow-title text-xl text-yellow-400">Přijmout Nový Úkol (Napsat Quest)</h3>
+        <button id="btn-close-modal" class="text-stone-400 hover:text-white font-bold text-lg px-2">&times;</button>
+      </div>
+
+      <form id="form-quest" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-wow-heading text-amber-300 mb-1">Název Questu *</label>
+          <input type="text" id="input-title" required placeholder="např. Úklid v Orgrimmaru" class="w-full bg-stone-900 border border-amber-900/80 rounded p-2 text-amber-100 focus:outline-none focus:border-yellow-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-wow-heading text-amber-300 mb-1">Kategorie / Zóna</label>
+            <input type="text" id="input-category" list="category-suggestions" placeholder="např. Domácnost, Práce" class="w-full bg-stone-900 border border-amber-900/80 rounded p-2 text-amber-100 focus:outline-none focus:border-yellow-500">
+            <datalist id="category-suggestions">
+              <option value="Osobní Cíle"></option>
+              <option value="Práce & Projekty"></option>
+              <option value="Fitness & Život"></option>
+              <option value="Domácnost"></option>
+            </datalist>
+          </div>
+          <div>
+            <label class="block font-wow-heading text-amber-300 mb-1">Doporučená Úroveň (1-60)</label>
+            <input type="number" id="input-level" min="1" max="60" value="1" class="w-full bg-stone-900 border border-amber-900/80 rounded p-2 text-amber-100 focus:outline-none focus:border-yellow-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-wow-heading text-amber-300 mb-1">Popis Questu (Příběh)</label>
+          <textarea id="input-description" rows="3" placeholder="Popiš detaily úkolu..." class="w-full bg-stone-900 border border-amber-900/80 rounded p-2 text-amber-100 focus:outline-none focus:border-yellow-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-wow-heading text-amber-300 mb-1">Cíle Úkolu (Jednotlivé kroky, oddělené novým řádkem) *</label>
+          <textarea id="input-objectives" required rows="3" placeholder="Vynést odpadky&#10;Umyj nádobí&#10;Polož čerstvé ručníky" class="w-full bg-stone-900 border border-amber-900/80 rounded p-2 text-amber-100 focus:outline-none focus:border-yellow-500"></textarea>
+        </div>
+
+        <!-- Rewards Input -->
+        <div class="border-t border-amber-900/40 pt-3">
+          <label class="block font-wow-heading text-yellow-400 mb-2">Odměny</label>
+          <div class="grid grid-cols-3 gap-2 mb-2">
+            <div>
+              <label class="text-stone-400">XP Zkušenosti</label>
+              <input type="number" id="input-xp" min="0" value="50" class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+            </div>
+            <div>
+              <label class="text-yellow-500">Zlaťáky (G)</label>
+              <input type="number" id="input-gold" min="0" value="1" class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+            </div>
+            <div>
+              <label class="text-stone-300">Stříbrňáky (S)</label>
+              <input type="number" id="input-silver" min="0" max="99" value="25" class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+            </div>
+          </div>
+
+          <!-- Optional Item Reward -->
+          <div class="grid grid-cols-3 gap-2 pt-2">
+            <div>
+              <label class="text-stone-400">Předmět (Název)</label>
+              <input type="text" id="input-item-name" placeholder="Volitelné..." class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+            </div>
+            <div>
+              <label class="text-stone-400">Rarita Předmětu</label>
+              <select id="input-item-rarity" class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+                <option value="common">Common (Běžná)</option>
+                <option value="uncommon">Uncommon (Neobvyklá)</option>
+                <option value="rare">Rare (Vzácná)</option>
+                <option value="epic">Epic (Epická)</option>
+                <option value="legendary">Legendary (Legendární)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-stone-400">Ikona (FontAwesome)</label>
+              <select id="input-item-icon" class="w-full bg-stone-900 border border-amber-900/80 rounded p-1.5 text-amber-100">
+                <option value="fa-shield">Štít</option>
+                <option value="fa-wand-magic-sparkles">Hůlka</option>
+                <option value="fa-scroll">Svitek</option>
+                <option value="fa-gem">Drahokam</option>
+                <option value="fa-flask">Lektvar</option>
+                <option value="fa-apple-whole">Jídlo</option>
+                <option value="fa-mug-hot">Káva / Nápoj</option>
+                <option value="fa-dumbbell">Činka</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-amber-900/60">
+          <button type="button" id="btn-cancel-modal" class="wow-btn-secondary px-4 py-2 rounded">Zrušit</button>
+          <button type="submit" class="wow-btn px-5 py-2 rounded">Přijmout Quest</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* ===================================================================
+       1. WEB AUDIO SYNTHESIZER (WOW UI Sound Effects Offline Engine)
+       =================================================================== */
+    class WowSoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Quest Select / Click Sound (Wood Click)
+      playClick() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.08);
+
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      // Objective Checked Sound (Parchment Pen Check)
+      playCheck() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.12);
+
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+
+      // Quest Completion Fanfare (WoW Brass/Chime Harmony)
+      playQuestComplete() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C E G C E
+
+        notes.forEach((freq, index) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + index * 0.09);
+
+          gain.gain.setValueAtTime(0, now + index * 0.09);
+          gain.gain.linearRampToValueAtTime(0.3, now + index * 0.09 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.09 + 0.8);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now + index * 0.09);
+          osc.stop(now + index * 0.09 + 0.85);
+        });
+      }
+
+      // Level Up Sound (Majestic Arpeggio & Chime)
+      playLevelUp() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const arpeggio = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+
+        arpeggio.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+
+          gain.gain.setValueAtTime(0.15, now + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.6);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.65);
+        });
+      }
+    }
+
+    const audio = new WowSoundEngine();
+
+    /* ===================================================================
+       2. INITIAL STATE (PŘEDNASTAVENÉ QUESTY ODSTRANĚNY - START ZCELA PRÁZDNÝ)
+       =================================================================== */
+    let state = {
+      player: {
+        name: "Hrdina Azerothu",
+        level: 1,
+        xp: 0,
+        xpNext: 100,
+        copper: 0,
+        completedQuestsCount: 0
+      },
+      quests: [], // Zde bylo pole vyčištěno
+      activeQuestId: null,
+      soundEnabled: true
+    };
+
+    /* ===================================================================
+       3. STORAGE MANAGEMENT (LocalStorage)
+       =================================================================== */
+    function loadState() {
+      try {
+        const saved = localStorage.getItem('wow_questbook_data');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state = { ...state, ...parsed };
+        }
+      } catch (e) {
+        console.error("Chyba při načítání dat z localStorage:", e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('wow_questbook_data', JSON.stringify(state));
+      } catch (e) {
+        console.error("Chyba při ukládání dat:", e);
+      }
+    }
+
+    /* ===================================================================
+       4. WOW LOGIC HELPERS (XP, Leveling, Money & Rarity Utils)
+       =================================================================== */
+    function convertMoney(totalCopper) {
+      const gold = Math.floor(totalCopper / 10000);
+      const silver = Math.floor((totalCopper % 10000) / 100);
+      const copper = totalCopper % 100;
+      return { gold, silver, copper };
+    }
+
+    function getLevelDifficultyClass(questLevel, playerLevel) {
+      const diff = questLevel - playerLevel;
+      if (diff <= -5) return 'lvl-trivial';   // Grey
+      if (diff <= -3) return 'lvl-easy';      // Green
+      if (diff <= 2)  return 'lvl-normal';    // Yellow
+      if (diff <= 4)  return 'lvl-hard';      // Orange
+      return 'lvl-veryhard';                  // Red
+    }
+
+    function addPlayerXP(amount) {
+      state.player.xp += amount;
+      let leveledUp = false;
+
+      while (state.player.xp >= state.player.xpNext) {
+        state.player.xp -= state.player.xpNext;
+        state.player.level += 1;
+        state.player.xpNext = Math.floor(state.player.xpNext * 1.5);
+        leveledUp = true;
+      }
+
+      if (leveledUp) {
+        triggerLevelUpAnimation();
+      }
+    }
+
+    function triggerLevelUpAnimation() {
+      audio.playLevelUp();
+      const overlay = document.getElementById('level-up-overlay');
+      const text = document.getElementById('level-up-text');
+      text.innerText = `Dosáhl jsi úrovně ${state.player.level}!`;
+      
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+      }, 2500);
+    }
+
+    /* ===================================================================
+       5. RENDER FUNCTIONS (UI Updating)
+       =================================================================== */
+    function renderPlayerHUD() {
+      document.getElementById('player-name').value = state.player.name;
+      document.getElementById('player-level').innerText = state.player.level;
+      
+      // XP Progress Bar
+      const xpPct = Math.min(100, Math.floor((state.player.xp / state.player.xpNext) * 100));
+      document.getElementById('xp-bar-fill').style.width = `${xpPct}%`;
+      document.getElementById('xp-text').innerText = `${state.player.xp} / ${state.player.xpNext} XP`;
+
+      // Coins
+      const money = convertMoney(state.player.copper);
+      document.getElementById('coin-gold').innerText = money.gold;
+      document.getElementById('coin-silver').innerText = money.silver;
+      document.getElementById('coin-copper').innerText = money.copper;
+
+      // Stats
+      document.getElementById('stat-completed-count').innerText = state.player.completedQuestsCount;
+      document.getElementById('quest-count-badge').innerText = `${state.quests.length} / 25`;
+    }
+
+    function renderQuestList() {
+      const container = document.getElementById('quest-tree-container');
+      container.innerHTML = '';
+
+      if (state.quests.length === 0) {
+        container.innerHTML = `<p class="text-stone-500 italic text-xs text-center py-8">Žádné aktivní questy.</p>`;
+        return;
+      }
+
+      // Group quests by category / zone
+      const categories = {};
+      state.quests.forEach(q => {
+        const cat = q.category || 'Všeobecné';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(q);
+      });
+
+      // Render categories and items
+      Object.keys(categories).forEach(catName => {
+        const catGroup = document.createElement('div');
+        
+        const catHeader = document.createElement('div');
+        catHeader.className = "text-amber-500 font-bold text-xs uppercase tracking-wider mb-1 flex items-center space-x-1 cursor-default";
+        catHeader.innerHTML = `<i class="fa-solid fa-[#f8b700] fa-folder-open text-[10px] mr-1"></i> ${catName}`;
+        catGroup.appendChild(catHeader);
+
+        const questUl = document.createElement('ul');
+        questUl.className = "space-y-1 ml-2 border-l border-amber-900/30 pl-2 mb-3";
+
+        categories[catName].forEach(q => {
+          const isSelected = q.id === state.activeQuestId;
+          const diffClass = getLevelDifficultyClass(q.level, state.player.level);
+          const isComplete = q.completed || q.objectives.every(o => o.completed);
+
+          const li = document.createElement('li');
+          li.className = `cursor-pointer px-2 py-1 rounded text-xs flex items-center justify-between transition ${
+            isSelected ? 'bg-amber-950/80 border border-amber-600/60 font-bold' : 'hover:bg-stone-900/80'
+          }`;
+
+          li.onclick = () => {
+            audio.playClick();
+            state.activeQuestId = q.id;
+            saveState();
+            renderAll();
+          };
+
+          const titleSpan = document.createElement('span');
+          titleSpan.className = `${diffClass} truncate mr-2 flex-1`;
+          titleSpan.innerText = `[${q.level}] ${q.title}`;
+
+          li.appendChild(titleSpan);
+
+          if (isComplete) {
+            const statusBadge = document.createElement('span');
+            statusBadge.className = "text-[10px] text-yellow-400 font-bold uppercase tracking-wider ml-1";
+            statusBadge.innerText = "(Hotovo)";
+            li.appendChild(statusBadge);
+          }
+
+          questUl.appendChild(li);
+        });
+
+        catGroup.appendChild(questUl);
+        container.appendChild(catGroup);
+      });
+    }
+
+    function renderQuestDetail() {
+      const emptyView = document.getElementById('quest-detail-empty');
+      const detailView = document.getElementById('quest-detail-content');
+
+      const currentQuest = state.quests.find(q => q.id === state.activeQuestId);
+
+      if (!currentQuest) {
+        emptyView.classList.remove('hidden');
+        detailView.classList.add('hidden');
+        return;
+      }
+
+      emptyView.classList.add('hidden');
+      detailView.classList.remove('hidden');
+      detailView.classList.add('flex');
+
+      // Set Title & Metadata
+      document.getElementById('detail-title').innerText = currentQuest.title;
+      document.getElementById('detail-category').innerText = currentQuest.category || 'Všeobecné';
+      
+      const levelBadge = document.getElementById('detail-level-badge');
+      const diffClass = getLevelDifficultyClass(currentQuest.level, state.player.level);
+      levelBadge.innerText = `Úroveň ${currentQuest.level}`;
+      levelBadge.className = `px-2 py-0.5 rounded font-mono font-bold ${diffClass} bg-amber-950/20 border border-amber-900/30`;
+
+      // Description
+      document.getElementById('detail-description').innerText = currentQuest.description || 'Žádné podrobnosti nebyly poskytnuty.';
+
+      // Objectives Checklist
+      const objList = document.getElementById('detail-objectives-list');
+      objList.innerHTML = '';
+
+      let allChecked = true;
+
+      currentQuest.objectives.forEach((obj, idx) => {
+        if (!obj.completed) allChecked = false;
+
+        const row = document.createElement('label');
+        row.className = "flex items-start space-x-2.5 cursor-pointer p-1 rounded hover:bg-amber-900/10 transition";
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.className = 'wow-checkbox mt-0.5';
+        chk.checked = obj.completed;
+        chk.disabled = currentQuest.completed;
+
+        chk.onchange = (e) => {
+          audio.playCheck();
+          obj.completed = e.target.checked;
+          saveState();
+          renderQuestDetail();
+          renderQuestList();
+        };
+
+        const span = document.createElement('span');
+        span.className = `leading-tight ${obj.completed ? 'line-through text-stone-600' : 'text-stone-900 font-medium'}`;
+        span.innerText = obj.text;
+
+        row.appendChild(chk);
+        row.appendChild(span);
+        objList.appendChild(row);
+      });
+
+      // Rewards Setup
+      document.getElementById('reward-xp').innerText = `${currentQuest.rewards.xp || 0} XP`;
+      
+      const m = convertMoney(currentQuest.rewards.copper || 0);
+      document.getElementById('reward-money-gold').innerHTML = `${m.gold}<i class="fa-solid fa-circle text-[9px] ml-0.5"></i>`;
+      document.getElementById('reward-money-silver').innerHTML = `${m.silver}<i class="fa-solid fa-circle text-[9px] ml-0.5"></i>`;
+      document.getElementById('reward-money-copper').innerHTML = `${m.copper}<i class="fa-solid fa-circle text-[9px] ml-0.5"></i>`;
+
+      // Item Reward Display
+      const itemContainer = document.getElementById('reward-item-container');
+      if (currentQuest.rewards.item && currentQuest.rewards.item.name) {
+        itemContainer.classList.remove('hidden');
+        const item = currentQuest.rewards.item;
+        
+        const nameEl = document.getElementById('reward-item-name');
+        const rarityEl = document.getElementById('reward-item-rarity');
+        const iconFrame = document.getElementById('reward-item-icon-frame');
+        const iconEl = document.getElementById('reward-item-icon');
+
+        nameEl.innerText = item.name;
+        nameEl.className = `font-bold text-sm leading-none rarity-${item.rarity || 'common'}`;
+        
+        rarityEl.innerText = item.rarity || 'common';
+        rarityEl.className = `text-[10px] uppercase font-bold tracking-wider mt-0.5 rarity-${item.rarity || 'common'}`;
+
+        iconFrame.className = `w-10 h-10 bg-stone-950 border-2 rounded flex items-center justify-center text-xl relative shadow rarity-${item.rarity || 'common'}`;
+        iconEl.className = `fa-solid ${item.icon || 'fa-shield'}`;
+      } else {
+        itemContainer.classList.add('hidden');
+      }
+
+      // Complete Button State
+      const completeBtn = document.getElementById('btn-complete-quest');
+      if (currentQuest.completed) {
+        completeBtn.disabled = true;
+        completeBtn.innerText = "Splněno";
+        completeBtn.classList.remove('complete-anim');
+      } else if (allChecked && currentQuest.objectives.length > 0) {
+        completeBtn.disabled = false;
+        completeBtn.innerText = "Dokončit Quest";
+        completeBtn.classList.add('complete-anim');
+      } else {
+        completeBtn.disabled = true;
+        completeBtn.innerText = "Dokončit Quest";
+        completeBtn.classList.remove('complete-anim');
+      }
+    }
+
+    function renderAll() {
+      renderPlayerHUD();
+      renderQuestList();
+      renderQuestDetail();
+    }
+
+    /* ===================================================================
+       6. USER ACTIONS & EVENT LISTENERS
+       =================================================================== */
+    // Complete Quest Action
+    document.getElementById('btn-complete-quest').onclick = () => {
+      const q = state.quests.find(x => x.id === state.activeQuestId);
+      if (!q || q.completed) return;
+
+      audio.playQuestComplete();
+
+      // Mark completed & add rewards
+      q.completed = true;
+      addPlayerXP(q.rewards.xp || 0);
+      state.player.copper += (q.rewards.copper || 0);
+      state.player.completedQuestsCount += 1;
+
+      saveState();
+      renderAll();
+    };
+
+    // Abandon Quest
+    document.getElementById('btn-abandon-quest').onclick = () => {
+      if (!confirm("Opravdu chceš tento quest opustit a odstranit z deníku?")) return;
+      audio.playClick();
+      state.quests = state.quests.filter(q => q.id !== state.activeQuestId);
+      state.activeQuestId = state.quests.length > 0 ? state.quests[0].id : null;
+      saveState();
+      renderAll();
+    };
+
+    // Sound Toggle Button
+    document.getElementById('btn-sound-toggle').onclick = () => {
+      state.soundEnabled = !state.soundEnabled;
+      audio.enabled = state.soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      if (state.soundEnabled) {
+        icon.className = "fa-solid fa-volume-high text-yellow-400";
+        audio.playClick();
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-stone-500";
+      }
+    };
+
+    // Clear Completed Quests
+    document.getElementById('btn-clear-completed').onclick = () => {
+      const completedCount = state.quests.filter(q => q.completed).length;
+      if (completedCount === 0) return;
+      if (!confirm(`Smazat ${completedCount} dokončených questů?`)) return;
+
+      audio.playClick();
+      state.quests = state.quests.filter(q => !q.completed);
+      if (!state.quests.find(q => q.id === state.activeQuestId)) {
+        state.activeQuestId = state.quests.length > 0 ? state.quests[0].id : null;
+      }
+      saveState();
+      renderAll();
+    };
+
+    // Editable Player Name
+    document.getElementById('player-name').onchange = (e) => {
+      state.player.name = e.target.value.trim() || "Hrdina";
+      saveState();
+    };
+
+    /* ===================================================================
+       7. MODAL: CREATE QUEST HANDLERS
+       =================================================================== */
+    const modal = document.getElementById('modal-new-quest');
+
+    document.getElementById('btn-new-quest').onclick = () => {
+      audio.playClick();
+      modal.classList.remove('hidden');
+    };
+
+    document.getElementById('btn-close-modal').onclick = () => {
+      modal.classList.add('hidden');
+    };
+
+    document.getElementById('btn-cancel-modal').onclick = () => {
+      modal.classList.add('hidden');
+    };
+
+    document.getElementById('form-quest').onsubmit = (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('input-title').value.trim();
+      const category = document.getElementById('input-category').value.trim() || 'Všeobecné';
+      const level = parseInt(document.getElementById('input-level').value) || 1;
+      const description = document.getElementById('input-description').value.trim();
+      
+      const rawObj = document.getElementById('input-objectives').value.split('\n');
+      const objectives = rawObj
+        .map(o => o.trim())
+        .filter(o => o.length > 0)
+        .map(text => ({ text, completed: false }));
+
+      const xp = parseInt(document.getElementById('input-xp').value) || 0;
+      const gold = parseInt(document.getElementById('input-gold').value) || 0;
+      const silver = parseInt(document.getElementById('input-silver').value) || 0;
+      const copperTotal = (gold * 10000) + (silver * 100);
+
+      const itemName = document.getElementById('input-item-name').value.trim();
+      const itemRarity = document.getElementById('input-item-rarity').value;
+      const itemIcon = document.getElementById('input-item-icon').value;
+
+      const newQuest = {
+        id: 'q_' + Date.now(),
+        title,
+        category,
+        level,
+        description,
+        objectives,
+        rewards: {
+          xp,
+          copper: copperTotal,
+          item: itemName ? { name: itemName, rarity: itemRarity, icon: itemIcon } : null
+        },
+        completed: false
+      };
+
+      state.quests.push(newQuest);
+      state.activeQuestId = newQuest.id;
+
+      saveState();
+      renderAll();
+
+      // Reset form & close
+      e.target.reset();
+      modal.classList.add('hidden');
+      audio.playCheck();
+    };
+
+    /* ===================================================================
+       8. JSON EXPORT & IMPORT BACKUP SYSTEM
+       =================================================================== */
+    document.getElementById('btn-export').onclick = () => {
+      audio.playClick();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `wow_questbook_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    };
+
+    document.getElementById('import-file').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importedData = JSON.parse(event.target.result);
+          if (importedData.player && importedData.quests) {
+            state = importedData;
+            saveState();
+            renderAll();
+            audio.playLevelUp();
+            alert("Questbook úspěšně načten!");
+          } else {
+            alert("Neplatný soubor zálohy!");
+          }
+        } catch (err) {
+          alert("Chyba při čtení JSON souboru.");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    /* ===================================================================
+       9. INITIALIZATION ON PAGE LOAD
+       =================================================================== */
+    window.onload = () => {
+      loadState();
+      renderAll();
+    };
+  </script>
+</body>
+</html>
